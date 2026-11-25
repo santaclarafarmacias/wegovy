@@ -1,0 +1,30 @@
+name: Actualizar precios desde Tienda Nube
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: precios
+  cancel-in-progress: false
+
+jobs:
+  precios:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Leer precios de la tienda y actualizar la página
+        run: |
+          status=0
+          python3 .github/scripts/actualizar_precios.py || status=$?
+          if ! git diff --quiet; then
+            git config user.name "Actualización de precios"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -am "Precios actualizados desde Tienda Nube"
+            git push
+          fi
+          exit $status
